@@ -6,7 +6,7 @@ class DataLoader(ABC):
     def __init__(self, config, source_dir, training_name, validation_name, test_name):
         self.source_dir = source_dir
         self.config = config
-        
+
         self.train = self.get_data(training_name)
         self.val = self.get_data(validation_name)
         self.test = self.get_data(test_name)
@@ -24,3 +24,8 @@ class DataLoader(ABC):
             raise FileNotFoundError(f"Data path {data_path} does not exist.")
         
         return self.load_path(data_path)
+    
+class Dataset(ABC): 
+    def __init__(self):
+        self.source = ""
+        self.target = ""
