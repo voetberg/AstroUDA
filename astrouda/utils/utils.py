@@ -1,5 +1,5 @@
 import yaml
-
+import torch
 
 def load_config(config_path: str):
     """
@@ -48,3 +48,26 @@ def get_device(config: dict):
         return torch.device('cuda')
     else:
         return torch.device('cpu')
+    
+
+def calculate_accuracy(predictions, labels):
+    """
+    Calculate classwise accuracy, returning a dictionary with accuracy for each class.
+    """
+    accuracy_dict = {}
+    for _class in torch.unique(labels):
+        class_mask = labels == _class
+        class_accuracy = (predictions[class_mask] == labels[class_mask]).float().mean().item()
+        accuracy_dict[_class.item()] = class_accuracy
+        
+    return accuracy_dict
+
+
+def plot_accuracy(accuracy_history: dict, config: dict) -> None:
+    "Plot accuracy of the different classes and datasets as a function of epoch"
+
+def plot_loss(loss_history: dict, config: dict) -> None: 
+    "Plot the multiple components of loss as a function of epoch"
+
+def plot_auc():
+    ""

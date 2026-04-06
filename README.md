@@ -19,15 +19,20 @@ $$
 L = L_{CE} + \lambda(L_{AC} + L_{ES})
 $$
 
+
+The AC (Adaptive Clustering loss) is built off two diffeerent models, a feature embedding model and a classifier model
+
+
 ## Experiments 
 
 Basic configuration files for each dataset are included in the `configs` directory. 
 To replicate the studies done in the paper: 
 
+Each experimenet with train the models with both basic cross-entry loss without domain adaptation and the DA combined loss.
 
 | Experiment | Command |
 | --- | --- |
-| LSST Y1 & Y10  Simulation | `astrouda run train --config "" ` |
+| LSST Y1 & Y10  Simulation | `astrouda train --config configs/lsst.yaml ` |
 | Galaxy Zoo 2 SDSS & DECaLS| |
 | Galaxy Zoo 2 SDSS Wide & SDSS Deep | |
 
