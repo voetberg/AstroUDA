@@ -1,4 +1,6 @@
 
+import json
+
 import torch
 
 from astrouda.models.losses import CrossEntropyLoss, AdaptiveClusteringLoss, EntropySeparationLoss
@@ -6,6 +8,7 @@ from astrouda.models.models import AdaptiveModel
 from astrouda.data.data import DADataLoader
 
 from astrouda.utils import utils
+from astrouda.utils.latent_visual import LatentVisualizer
 
 
 class TrainDA: 
@@ -14,15 +17,15 @@ class TrainDA:
         self.logger = utils.make_logger(config)
         self.device = utils.get_device(config)
 
-        base_model =  AdaptiveModel(self.config)
+        self.base_model =  AdaptiveModel(self.config)
 
-        self.feature_model = base_model.feature_model
+        self.feature_model = self.base_model.feature_model
         self.feature_model.eval()
 
-        self.classifier_model = base_model.classifier_model
+        self.classifier_model = self.base_model.classifier_model
 
-        self.optimizer = base_model.optimizer
-        self.scheduler = base_model.scheduler
+        self.optimizer = self.base_model.optimizer
+        self.scheduler = self.base_model.scheduler
 
         self._lambda = torch.Tensor([config.get('lambda', 0.005)], device=self.device)
 
@@ -178,5 +181,49 @@ class TrainDA:
             self.logger.info(f"Updated learning rate: {self.scheduler.get_last_lr()}")
             self.logger.info(f"Updated lambda value: {self._lambda}")
 
+    def test(self):
+        self.config['test'] = True
+        loader = DADataLoader(self.config)
+        loader = loader.get_data_loader()
+        self.classifier_model.eval()
+        accuracy = {
+            "source": [],
+            "target": []
+        }
+        for source, labels, target in loader:
+            source_prediction = self.classifier_model(source)
+            target_prediction = self.classifier_model(target)
+
+            acc_source = utils.calculate_accuracy(labels, source_prediction)
+            acc_target = utils.calculate_accuracy(None, target_prediction)
+            accuracy["source"].append(acc_source)
+            accuracy["target"].append(acc_target)
+            
+        self.logger.info(
+                f"Test Loss \n \
+                (source): {torch.mean(accuracy['source'])} \n \
+                (target): {torch.mean(accuracy['target'])}"
+            )
+        LatentVisualizer(self.config, self.feature_model, loader)()
+
+
+    def save(self):
+        self.base_model.save_results()
+
+        save_path = f"{self.base_model.output_path}/training_history.json"
+        with open(save_path, 'w') as f:
+            json.dump({
+                "loss_history": self.loss_history,
+                "val_history": self.val_history
+            }, f)
+        self.logger.info(f"Saved training history to {save_path}")
+
+        utils.plot_loss(self.loss_history, self.config)
+        self.logger.info(f"Plotted loss history to {self.base_model.output_path}/loss_history.png")
+        utils.plot_accuracy(self.val_history, self.config)
+        self.logger.info(f"Plotted accuracy history to {self.base_model.output_path}/accuracy_[datasets].png")
+
+
     def __call__(self):
         self.train()
+        self.save()

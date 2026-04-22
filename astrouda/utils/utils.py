@@ -1,5 +1,8 @@
 import yaml
 import torch
+import matplotlib.pyplot as plt
+import logging
+
 
 def load_config(config_path: str):
     """
@@ -28,7 +31,6 @@ def make_logger(config:dict):
     Returns:
         logging.Logger: Configured logger instance.
     """
-    import logging
 
     logging.basicConfig(level=config.get('log_level', 'INFO'))
 
@@ -66,8 +68,33 @@ def calculate_accuracy(predictions, labels):
 def plot_accuracy(accuracy_history: dict, config: dict) -> None:
     "Plot accuracy of the different classes and datasets as a function of epoch"
 
+    for dataset in accuracy_history:
+        plt.figure(figsize=(10, 6))
+        for _class in accuracy_history[dataset][0]: # Get the first epoch to get the classes
+            plt.plot([epoch for epoch in range(len(accuracy_history[dataset]))], [accuracy_history[dataset][epoch][_class] for epoch in range(len(accuracy_history[dataset]))], label=f"Class {_class}")
+        plt.title(f"Accuracy for {dataset} Dataset")
+        plt.xlabel("Epoch")
+        plt.ylabel("Accuracy")
+        plt.legend()
+        plt.savefig(f"{config.get('results_dir', './results')}/accuracy_{dataset}.png")
+        plt.close()
+
+
 def plot_loss(loss_history: dict, config: dict) -> None: 
     "Plot the multiple components of loss as a function of epoch"
+
+    # Each component of loss gets it own subplot (3 +1 total)
+    fig, axs = plt.subplots(4, 1, figsize=(12, 8))
+    for i, loss_component in enumerate(loss_history):
+        axs[i].plot(loss_history[loss_component], label=loss_component)
+        axs[i].set_title(f"{loss_component} over Epochs")
+        axs[i].set_xlabel("Epoch")
+        axs[i].set_ylabel("Loss")
+        axs[i].legend()
+
+    fig.tight_layout()
+    fig.savefig(f"{config.get('results_dir', './results')}/loss_history.png")
+    plt.close()
 
 def plot_auc():
     ""

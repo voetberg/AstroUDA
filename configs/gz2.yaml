@@ -1,0 +1,15 @@
+"source_dataset": "SDSS Wide"
+"target_dataset": "DeCals"
+"source_dir": "./data/gz2"
+"batch_size": 32
+"num_epochs": 2
+"learning_rate": 0.001
+"resize_size": 256
+"crop_size": 224
+"shuffle": True
+"reduction": "mean"
+"threshold": 0.95
+"w_cons": 0.1
+"num_classes": 3
+"top_k": 3
+"feature_extractor": "resnet18"

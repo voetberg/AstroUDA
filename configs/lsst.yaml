@@ -1,6 +1,6 @@
-"source_dataset": "SDSS Wide"
-"target_dataset": "SDSS Stripe82"
-"source_dir": "./data/sdss"
+"source_dataset": "LSST Y1"
+"target_dataset": "LSST Y10"
+"source_dir": "./data/lsst"
 "batch_size": 32
 "num_epochs": 2
 "learning_rate": 0.001
