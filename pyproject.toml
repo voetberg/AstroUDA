@@ -10,12 +10,11 @@ authors =[
 readme = "README.md"
 
 dependencies = [
-    "click>=8.1.7",
     "matplotlib>=3.10.3",
     "numpy>=2.2.6", 
     "torch>=2.11.0", 
-    "h5py>=3.16.0"
-
+    "h5py>=3.16.0",
+    "scikit-learn>=1.8.0"
 ]
 
 [build-system]
@@ -24,6 +23,3 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 include = ["astrouda"]
-
-[project.scripts]
-astrouda = "astrouda.run:main"

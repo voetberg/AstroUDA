@@ -78,6 +78,7 @@ class DADataLoader():
         self.config = config
         self.batch_size = config.get("batch_size", 32)
         self.shuffle = config.get("shuffle", True)
+        Download(config)() # download data if not already present
 
     def get_data_loader(self, train=True):
         dataset = DADataset(self.config, train)
@@ -90,9 +91,7 @@ class DADataLoader():
     
 class DADataset(Dataset):
     def __init__(self, config, train=True):
-        self.config = config
-        Download(config)() # download data if not already present
-        
+        self.config = config        
         self.train = train
         self.source_data, self.source_labels = self.load_data(self.config.get("source_dataset", "LSST Y1"))
         self.target_data, _ = self.load_data(self.config.get("target_dataset", "LSST Y10"))

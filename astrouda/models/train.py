@@ -77,14 +77,13 @@ class TrainDA:
             self.logger.info(unchanged_message)
 
 
-    def calculate_loss(self, source, source_labels, target):
+    def calculate_loss(self, source, source_labels, target) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         source_prediction = self.classifier_model(source).to(float)
         CE_loss = self.ce_loss_fn.forward(source_prediction, source_labels)
 
         # Non-labeled loss
         target_prediction = self.classifier_model(target)
-        target_features = self.feature_model(target)
-        ES_loss = self.es_loss_fn.forward(target_features, target_prediction, self.bound_p, self.bound_m)
+        ES_loss = self.es_loss_fn.forward(target_prediction, self.bound_p, self.bound_m)
 
         # Combined loss with target and source domains
         AC_loss = self.ac_loss_fn.forward(
@@ -105,6 +104,7 @@ class TrainDA:
         for source, source_labels, target in data_loader:
 
             CE_loss, AC_loss, ES_loss = self.calculate_loss(source, source_labels, target)
+            
             loss = CE_loss + self._lambda * (AC_loss + ES_loss)
 
             batch_loss.append(loss)
@@ -116,7 +116,7 @@ class TrainDA:
                 f"Training \n\
                 CE Loss: {CE_loss}\n\
                 AC Loss: {AC_loss}\n\
-                ES Loss: {ES_loss}\n\
+                ES Loss: {ES_loss.item()}\n\
                 Total Loss: {loss.item()}"
             )
         

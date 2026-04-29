@@ -181,16 +181,16 @@ class EntropySeparationLoss(Loss):
     def _entropy_fn(self, p):
         return torch.sum(p * torch.log(p+1e-5), 1)
 
-    def _seperation_loss(self, probabilities, labels):
-      probabilities = torch.softmax(probabilities, dim=-1)[:, :labels.shape[-1]]
+    def _seperation_loss(self, probabilities):
+      probabilities = torch.softmax(probabilities, dim=-1)
       return -torch.mean(
             self._hinge_fn(
-                torch.abs(self._entropy_fn(probabilities - labels)), 
+                torch.abs(self._entropy_fn(probabilities)), 
             )
         )
 
-    def forward(self, probabilities, labels, boundry_p, boundry_m):
-        loss = self._seperation_loss(probabilities, labels)
+    def forward(self, probabilities, boundry_p, boundry_m):
+        loss = self._seperation_loss(probabilities)
         if torch.abs(loss - boundry_p) > boundry_m:
             return -1* torch.abs(loss - boundry_p)
         else:
