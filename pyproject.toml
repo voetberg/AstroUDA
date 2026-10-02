@@ -1,25 +1,31 @@
 [project]
 name = "astrouda"
-version = "0.1.0"
+version = "0.2.0"
 requires-python = ">=3.12"
-description = ""
-authors =[
+description = "Universal domain adaptation for galaxy morphology (DeepAstroUDA, arXiv:2302.02005)"
+authors = [
     {name="voetberg", email="maggiev@fnal.gov"}
-
 ]
 readme = "README.md"
 
 dependencies = [
-    "matplotlib>=3.10.3",
-    "numpy>=2.2.6", 
-    "torch>=2.11.0", 
-    "h5py>=3.16.0",
-    "scikit-learn>=1.8.0"
+    "matplotlib>=3.8",
+    "numpy>=1.26",
+    "torch>=2.5",
+    "torchvision>=0.20",
+    "h5py>=3.10",
+    "scikit-learn>=1.4",
 ]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
 
 [build-system]
 requires = ["setuptools >= 61.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-include = ["astrouda"]
+include = ["astrouda*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

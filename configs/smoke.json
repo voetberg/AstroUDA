@@ -1,0 +1,22 @@
+{
+  "experiment_name": "smoke",
+  "output_directory": "./outputs/smoke",
+  "device": "cpu",
+  "dataset_name": "synthetic",
+  "synthetic_samples_per_domain": 96,
+  "number_of_classes": 3,
+  "native_image_size": 32,
+  "crop_size": 32,
+  "augmentation_zoom_size": 36,
+  "batch_size": 8,
+  "backbone_depth": 18,
+  "use_small_input_stem": true,
+  "top_k": 3,
+  "bank_size": 64,
+  "maximum_epochs": 3,
+  "learning_rate_decay_every_epochs": 1,
+  "early_stopping_patience_epochs": 2,
+  "entropy_boundary_patience_epochs": 1,
+  "confidence_margin_patience_epochs": 1,
+  "number_of_seeds": 2
+}

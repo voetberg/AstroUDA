@@ -1,0 +1,16 @@
+name: astrouda
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  # conda-forge selects the CUDA build of pytorch on Linux (cluster) and the CPU/MPS build on macOS
+  - pytorch>=2.5
+  - torchvision
+  - numpy
+  - scikit-learn
+  - h5py
+  - matplotlib
+  - pytest
+  - pip
+  - pip:
+      - -e .

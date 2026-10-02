@@ -1,0 +1,20 @@
+{
+  "experiment_name": "lsst_y1_to_y10",
+  "output_directory": "./outputs/lsst_y1_to_y10",
+  "device": "auto",
+  "dataset_name": "lsst",
+  "source_domain_name": "LSST Y1",
+  "target_domain_name": "LSST Y10",
+  "data_directory": "./data/lsst",
+  "number_of_classes": 3,
+  "native_image_size": 100,
+  "crop_size": 256,
+  "batch_size": 64,
+  "backbone_depth": 50,
+  "top_k": 3,
+  "learning_rate_decay_every_epochs": 7,
+  "use_mixed_precision": true,
+  "number_of_dataloader_workers": 8,
+  "pin_memory": true,
+  "number_of_seeds": 5
+}

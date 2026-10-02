@@ -172,3 +172,11 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# Project
+.kilo/
+.worktrees/
+data/
+outputs/
+results/
+*.pth
