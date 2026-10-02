@@ -18,6 +18,19 @@ Experiment (all seeds, adapted and source only, then aggregation):
 Hyperparameter sweep (NUMBER_OF_TRIALS must match the array size):
   NUMBER_OF_TRIALS=30 sbatch --array=0-29 slurm/optimize_array.sbatch CONFIG SEARCH_SPACE.json
 
+Wall time and automatic resubmission (train.sbatch, experiment_array.sbatch, optimize_array.sbatch request 8 hours):
+  The job reads its TimeLimit from scontrol and trains with a budget of
+  limit - time already used - TIME_MARGIN_SECONDS (default 1200, for startup, final checkpoint, shell overhead).
+  When the next epoch would not fit, training checkpoints and exits 75; the script then resubmits itself with the
+  same arguments and continues from <output_directory>/checkpoint.pt (auto_resume=true is passed by the scripts).
+  Experiment array: only the stopped task is resubmitted (--array=<task>), plus a new aggregate.sbatch job that
+  depends on it (afterok). An aggregation that finds runs missing while astrouda_experiment jobs are still queued
+  or running defers to the later aggregation job and exits 0.
+  MAXIMUM_RESUBMISSIONS (default 20) caps a chain, RESUBMISSION_COUNT is set by each link, the job fails clearly at the cap:
+    MAXIMUM_RESUBMISSIONS=40 TIME_MARGIN_SECONDS=1800 sbatch slurm/train.sbatch CONFIG
+  See the chain: squeue -u $USER -o "%i %j %T %E", and slurm/logs/*.out ("Resubmitted ... as job N").
+  optimize_array.sbatch has the limit only: trials are short and finished trials are skipped on rerun.
+
 Resume a training run from its checkpoint:
   sbatch slurm/train.sbatch CONFIG --set resume_from_checkpoint=outputs/NAME/checkpoint.pt
 

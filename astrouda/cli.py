@@ -5,6 +5,7 @@ import sys
 from typing import Any, Optional
 
 from astrouda.config import Config
+from astrouda.exit_codes import EX_TEMPFAIL
 from astrouda.optimization.cli import optimize_command, register_optimize_parser
 from astrouda.training import Trainer
 
@@ -49,6 +50,7 @@ def build_argument_parser() -> argparse.ArgumentParser:
 
 
 def train_command(config_path: str, override_texts: list[str]) -> Trainer:
+    "Returns the Trainer; check trainer.stopped_for_time_limit to see whether training ended early."
     overrides: dict[str, Any] = dict(parse_override(override_text) for override_text in override_texts)
     config: Config = Config(config_path, **overrides)
     trainer: Trainer = Trainer(config)
@@ -58,13 +60,19 @@ def train_command(config_path: str, override_texts: list[str]) -> Trainer:
 
 
 def main(argument_list: Optional[list[str]] = None) -> int:
-    "Returns the process exit code: 0 on success, 1 on any failure."
+    "Returns the process exit code: 0 on success, 1 on any failure, EX_TEMPFAIL (75) when stopped for the time limit."
     arguments: argparse.Namespace = build_argument_parser().parse_args(argument_list)
 
     try:
         if arguments.command == "train":
-            train_command(arguments.config, arguments.overrides)
-        elif arguments.command in ("experiment", "aggregate"):
+            trainer: Trainer = train_command(arguments.config, arguments.overrides)
+            if trainer.stopped_for_time_limit:
+                return EX_TEMPFAIL
+        elif arguments.command == "experiment":
+            experiment_exit_code: int = arguments.handler(arguments)
+            if experiment_exit_code != 0:
+                return experiment_exit_code
+        elif arguments.command == "aggregate":
             arguments.handler(arguments)
         elif arguments.command == "download":
             return arguments.handler(arguments)

@@ -10,7 +10,8 @@
 #SBATCH --constraint=gpu
 #SBATCH -G 1
 #SBATCH --cpus-per-task=16
-#SBATCH --time=48:00:00
+# One trial is short and completed trials are skipped on rerun, so there is no wall time budget or self-resubmission here
+#SBATCH --time=08:00:00
 #SBATCH --output=slurm/logs/%x_%A_%a.out
 #SBATCH --mail-user=maggiev@fnal.gov
 #SBATCH --mail-type=END,FAIL

@@ -10,6 +10,7 @@ from astrouda.evaluation import (
     plot_confusion_matrix,
     plot_roc_curves,
 )
+from astrouda.exit_codes import EX_TEMPFAIL
 from astrouda.logging_utils import get_logger
 from astrouda.training import PredictionSet, Trainer
 
@@ -17,6 +18,10 @@ ADAPTED_MODE: str = "adapted"
 SOURCE_ONLY_MODE: str = "source_only"
 MODES: tuple[str, str] = (ADAPTED_MODE, SOURCE_ONLY_MODE)
 REPORT_FILE_NAME: str = "report.json"
+
+
+class RunStoppedForTimeLimit(RuntimeError):
+    "Raised by run_single when training stopped at the wall time limit. Rerunning the same run continues it."
 
 
 @dataclass(frozen=True)
@@ -93,14 +98,21 @@ def class_names_for(config: Config) -> Optional[list[str]]:
 
 
 def run_single(base_config: Config, run_index: int) -> Optional[RunSpecification]:
-    "Train, reload the best weights, evaluate on the test split and save. Returns None when skipped."
+    "Train, reload the best weights, evaluate on the test split and save. Returns None when skipped. Raises RunStoppedForTimeLimit."
     specification: RunSpecification = build_run_specification(base_config, run_index)
     logger = get_logger(__name__, base_config)
 
-    if os.path.exists(specification.report_path) and not base_config.overwrite_existing_runs:
-        logger.info(f"Skipping run {run_index} ({specification.mode}, seed {specification.seed}): {specification.report_path} exists")
+    if os.path.exists(specification.report_path):
+        if not base_config.overwrite_existing_runs:
+            logger.info(f"Skipping run {run_index} ({specification.mode}, seed {specification.seed}): {specification.report_path} exists")
 
-        return None
+            return None
+
+        checkpoint_path: str = os.path.join(specification.output_directory, "checkpoint.pt")
+        logger.info(f"Overwriting run {run_index}: removing {specification.report_path} and {checkpoint_path}")
+        os.remove(specification.report_path)
+        if os.path.exists(checkpoint_path):
+            os.remove(checkpoint_path)
 
     logger.info(f"Run {run_index}: seed {specification.seed}, mode {specification.mode}, into {specification.output_directory}")
     run_values: dict[str, Any] = base_config.to_dictionary()
@@ -108,9 +120,16 @@ def run_single(base_config: Config, run_index: int) -> Optional[RunSpecification
         random_seed=specification.seed,
         output_directory=specification.output_directory,
         enable_domain_adaptation=specification.enable_domain_adaptation,
+        auto_resume=True,
     )
     trainer: Trainer = Trainer(Config(None, **run_values))
     trainer.train()
+
+    if trainer.stopped_for_time_limit:
+        logger.info(f"Run {run_index} stopped for the wall time limit at epoch {trainer.completed_epochs}, no report written")
+
+        raise RunStoppedForTimeLimit(f"run {run_index} ({specification.mode}, seed {specification.seed})")
+
     trainer.load_best_model()
 
     prediction_set: PredictionSet = trainer.collect_predictions("test")
@@ -172,13 +191,21 @@ def run_experiment(base_config: Config, run_index: Optional[int] = None) -> list
     return completed_specifications
 
 
-def experiment_command(config_path: str, override_texts: list[str], run_index: Optional[int]) -> None:
+def experiment_command(config_path: str, override_texts: list[str], run_index: Optional[int]) -> int:
+    "Returns 0 when every requested run completed, EX_TEMPFAIL at the first run stopped for the time limit."
     from astrouda.cli import parse_override
     from astrouda.experiment.aggregation import aggregate_experiment
 
     overrides: dict[str, Any] = dict(parse_override(override_text) for override_text in override_texts)
     config: Config = Config(config_path, **overrides)
-    run_experiment(config, run_index)
+    try:
+        run_experiment(config, run_index)
+    except RunStoppedForTimeLimit as stopped_run:
+        get_logger(__name__, config).info(f"Stopped for the wall time limit in {stopped_run}, rerun the same command to continue")
+
+        return EX_TEMPFAIL
 
     if run_index is None:
         aggregate_experiment(config)
+
+    return 0

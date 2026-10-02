@@ -2,10 +2,12 @@ import json
 import os
 from typing import Callable
 
+import pytest
 import torch
 
 from astrouda.config import Config
 from astrouda.training import Trainer
+from astrouda.training.checkpoint import load_checkpoint, save_checkpoint
 
 ConfigFactory = Callable[..., Config]
 
@@ -70,3 +72,19 @@ def test_checkpoint_every_epochs_controls_cadence(make_tiny_config: ConfigFactor
     trainer.train()
 
     assert saved_epochs == [3, 4]
+
+
+def test_failed_checkpoint_write_keeps_previous_checkpoint(tmp_path: "os.PathLike[str]", monkeypatch) -> None:
+    checkpoint_path: str = os.path.join(str(tmp_path), "checkpoint.pt")
+    save_checkpoint({"epoch": 1}, checkpoint_path)
+
+    def interrupted_save(checkpoint: dict, destination: str) -> None:
+        with open(destination, "wb") as partial_file:
+            partial_file.write(b"partial")
+        raise RuntimeError("killed mid write")
+
+    monkeypatch.setattr(torch, "save", interrupted_save)
+    with pytest.raises(RuntimeError):
+        save_checkpoint({"epoch": 2}, checkpoint_path)
+
+    assert load_checkpoint(checkpoint_path) == {"epoch": 1}
