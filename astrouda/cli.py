@@ -40,6 +40,10 @@ def build_argument_parser() -> argparse.ArgumentParser:
     from astrouda.experiment.cli_registration import register_experiment_subcommands
 
     register_experiment_subcommands(subparsers)
+
+    from astrouda.data.cli_registration import register_data_subcommands
+
+    register_data_subcommands(subparsers)
     register_optimize_parser(subparsers)
 
     return parser
@@ -70,6 +74,8 @@ def main(argument_list: Optional[list[str]] = None) -> int:
                 return experiment_exit_code
         elif arguments.command == "aggregate":
             arguments.handler(arguments)
+        elif arguments.command == "download":
+            return arguments.handler(arguments)
         elif arguments.command == "optimize":
             return optimize_command(arguments)
     except Exception:
