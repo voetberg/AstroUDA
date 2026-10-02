@@ -272,7 +272,7 @@ def test_lsst_label_mismatch_raises(tmp_path: Path) -> None:
 
 def test_unknown_dataset_raises() -> None:
     with pytest.raises(NotImplementedError):
-        build_data_loaders(make_config(dataset_name="gz2_sdss_decals"))
+        build_data_loaders(make_config(dataset_name="nonexistent"))
 
 
 def test_smoke_config_builds() -> None:

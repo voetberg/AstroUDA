@@ -7,6 +7,7 @@ import torch.nn.functional as functional
 from astrouda.config import Config
 from astrouda.data.augmentation import TwoViewAugmentation
 from astrouda.data.batch import DomainAdaptationBatch, DomainData
+from astrouda.data.gz2 import GalaxyZoo2Loader
 from astrouda.data.lsst import LSSTLoader
 from astrouda.data.splits import SplitIndices, stratified_split
 from astrouda.data.synthetic import SyntheticGenerator
@@ -160,7 +161,14 @@ def load_domains(config: Config) -> tuple[DomainData, DomainData]:
 
         return lsst_loader.load_domain(config.source_domain_name), lsst_loader.load_domain(config.target_domain_name)
 
-    raise NotImplementedError(f"dataset_name '{config.dataset_name}' has no loader yet; use 'lsst' or 'synthetic'")
+    if config.dataset_name in GalaxyZoo2Loader.EXPERIMENT_FILES:
+        gz2_loader: GalaxyZoo2Loader = GalaxyZoo2Loader(config)
+
+        return gz2_loader.load_domain(0), gz2_loader.load_domain(1)
+
+    raise NotImplementedError(
+        f"dataset_name '{config.dataset_name}' has no loader; use 'lsst', 'gz2_sdss_decals', 'gz2_sdss_wide_deep' or 'synthetic'"
+    )
 
 
 def build_data_loaders(config: Config) -> DataLoaders:

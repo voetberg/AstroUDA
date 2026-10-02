@@ -42,6 +42,24 @@ class Config:
     split_seed: int = 0
     batch_size: int = 64
     synthetic_samples_per_domain: int = 256  # only used by dataset_name == "synthetic"
+    gz2_source_file: Optional[str] = None  # None -> experiment default, relative to data_directory
+    gz2_target_file: Optional[str] = None
+    gz2_image_key: str = "images"  # HDF5 dataset name; "{part}" is replaced by each of gz2_part_names
+    gz2_label_key: str = "labels"
+    gz2_part_names: list[str] = ["train", "val", "test"]  # only used when a key contains "{part}"
+    gz2_channel_order: list[int] = [0, 1, 2]  # file channel index for each of the output channels i, r, g
+    gz2_class_names: list[str] = [
+        "disturbed",
+        "merging",
+        "round smooth",
+        "cigar shaped smooth",
+        "barred spiral",
+        "unbarred tight spiral",
+        "unbarred loose spiral",
+        "edge-on without bulge",
+        "edge-on with bulge",
+        "lenses",
+    ]
 
     # ---- Augmentation ----
     use_augmented_views: bool = True
