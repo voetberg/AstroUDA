@@ -64,10 +64,25 @@ def test_every_cli_subcommand_is_submitted() -> None:
 def test_sbatch_scripts_declare_resources(script_path: Path) -> None:
     script_text: str = script_path.read_text()
 
-    for directive in ("--partition=", "--account=", "--time=", "--mem=", "--cpus-per-task=", "--output=slurm/logs/"):
+    for directive in ("--account=m2612", "--qos=", "--time=", "--cpus-per-task=", "--output=slurm/logs/"):
         assert f"#SBATCH {directive}" in script_text
-    if script_path.name != "aggregate.sbatch":
-        assert "#SBATCH --gres=gpu:a100:1" in script_text
+    assert "CHANGE_ME" not in script_text
+
+    if script_path.name == "aggregate.sbatch":
+        assert "#SBATCH --constraint=cpu" in script_text
+        assert "#SBATCH -G" not in script_text
+    else:
+        assert "#SBATCH --constraint=gpu" in script_text
+        assert "#SBATCH -G 1" in script_text
+
+
+def test_gpu_test_script_fits_the_debug_queue() -> None:
+    script_text: str = (SLURM_DIRECTORY / "test_gpu.sbatch").read_text()
+
+    assert "#SBATCH --qos=debug" in script_text
+    assert "#SBATCH --time=00:30:00" in script_text
+    assert "pytest -m gpu" in script_text
+    assert "nvidia-smi" in script_text
 
 
 def test_experiment_array_covers_both_modes_for_every_seed() -> None:
