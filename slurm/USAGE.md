@@ -8,6 +8,16 @@ synthetic images for two epochs, with peak GPU memory and utilisation printed at
   sbatch slurm/test_gpu.sbatch
   tail -f slurm/logs/astrouda-test_<jobid>.out
 
+Data: set DOWNLOAD_DATASET=lsst (about 16 GB) or gz2 (about 3.9 GB) when submitting and the job fetches it from
+Zenodo into $SCRATCH/astrouda_data/<dataset> before training, then points data_directory at it. DATA_DIRECTORY
+changes the location. Files that are already complete are skipped, so resubmitted jobs and array tasks are safe, and
+the time spent downloading counts against the 8 hour budget.
+  DOWNLOAD_DATASET=lsst sbatch slurm/train.sbatch configs/lsst_full.json
+  DOWNLOAD_DATASET=lsst slurm/submit_experiment.sh configs/lsst_full.json
+If the compute nodes have no internet, fetch once from a login node and leave DOWNLOAD_DATASET unset:
+  python -m astrouda.cli download --dataset lsst --directory $SCRATCH/astrouda_data/lsst
+  sbatch slurm/train.sbatch configs/lsst_full.json --set data_directory=$SCRATCH/astrouda_data/lsst
+
 Single training run:
   sbatch slurm/train.sbatch configs/lsst_full.json --set random_seed=1
 

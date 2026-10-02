@@ -30,6 +30,7 @@ CONDA_ENVIRONMENT="${CONDA_ENVIRONMENT:-/pscratch/sd/v/voetberg/astrouda}"
 # ---- End of environment ----
 
 cd "${SLURM_SUBMIT_DIR}"
+source slurm/data_helpers.sh
 
 # conda activation scripts reference unset variables
 set +u
@@ -50,5 +51,7 @@ export PYTHONUNBUFFERED=1
 echo "Job ${SLURM_JOB_ID} array task ${SLURM_ARRAY_TASK_ID:-none} on $(hostname)"
 nvidia-smi --query-gpu=name,memory.total --format=csv,noheader
 
+prepare_data
+
 python -m astrouda.cli optimize --config "${CONFIG_PATH}" --search-space "${SEARCH_SPACE_PATH}" \
-    --trials "${NUMBER_OF_TRIALS}" --trial-index "${SLURM_ARRAY_TASK_ID}" "$@"
+    --trials "${NUMBER_OF_TRIALS}" --trial-index "${SLURM_ARRAY_TASK_ID}" "$@" ${DATA_ARGUMENTS[@]+"${DATA_ARGUMENTS[@]}"}
