@@ -30,6 +30,7 @@ CONDA_ENVIRONMENT="${CONDA_ENVIRONMENT:-/pscratch/sd/v/voetberg/astrouda}"
 
 cd "${SLURM_SUBMIT_DIR}"
 source slurm/resubmit_helpers.sh
+source slurm/data_helpers.sh
 
 # conda activation scripts reference unset variables
 set +u
@@ -50,6 +51,8 @@ export PYTHONUNBUFFERED=1
 echo "Job ${SLURM_JOB_ID} array task ${SLURM_ARRAY_TASK_ID:-none} on $(hostname)"
 nvidia-smi --query-gpu=name,memory.total --format=csv,noheader
 
+prepare_data
+
 WALL_TIME_BUDGET_SECONDS="$(wall_time_budget_seconds)"
 BUDGET_ARGUMENTS=()
 if [ -n "${WALL_TIME_BUDGET_SECONDS}" ]; then
@@ -60,7 +63,7 @@ else
 fi
 
 set +e
-python -m astrouda.cli experiment --config "${CONFIG_PATH}" --run-index "${SLURM_ARRAY_TASK_ID}" "$@" \
+python -m astrouda.cli experiment --config "${CONFIG_PATH}" --run-index "${SLURM_ARRAY_TASK_ID}" "$@" ${DATA_ARGUMENTS[@]+"${DATA_ARGUMENTS[@]}"} \
     ${BUDGET_ARGUMENTS[@]+"${BUDGET_ARGUMENTS[@]}"} --set auto_resume=true
 RUN_EXIT_STATUS=$?
 set -e

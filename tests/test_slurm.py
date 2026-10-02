@@ -15,6 +15,7 @@ ConfigFactory = Callable[..., Config]
 REPOSITORY_ROOT: Path = Path(__file__).resolve().parent.parent
 SLURM_DIRECTORY: Path = REPOSITORY_ROOT / "slurm"
 SLURM_SCRIPT_PATHS: list[Path] = sorted(SLURM_DIRECTORY.glob("*.sbatch")) + [SLURM_DIRECTORY / "submit_experiment.sh"]
+CLI_SCANNED_PATHS: list[Path] = SLURM_SCRIPT_PATHS + [SLURM_DIRECTORY / "resubmit_helpers.sh", SLURM_DIRECTORY / "data_helpers.sh"]
 PRODUCTION_SCRIPT_NAMES: list[str] = ["train.sbatch", "experiment_array.sbatch", "optimize_array.sbatch"]
 
 ALLOWED_FLAGS_BY_SUBCOMMAND: dict[str, set[str]] = {
@@ -22,6 +23,7 @@ ALLOWED_FLAGS_BY_SUBCOMMAND: dict[str, set[str]] = {
     "experiment": {"--config", "--set", "--run-index"},
     "aggregate": {"--config", "--set"},
     "optimize": {"--config", "--search-space", "--trials", "--trial-index", "--set"},
+    "download": {"--dataset", "--directory", "--file", "--verify-existing"},
 }
 CLI_INVOCATION_PATTERN: re.Pattern[str] = re.compile(r"python -m astrouda\.cli (\w+)((?:[^\n]|\\\n)*)")
 FLAG_PATTERN: re.Pattern[str] = re.compile(r"(--[a-z][a-z-]*)")
@@ -46,7 +48,7 @@ def test_script_has_valid_bash_syntax(script_path: Path) -> None:
     assert "set -euo pipefail" in script_path.read_text()
 
 
-@pytest.mark.parametrize("script_path", SLURM_SCRIPT_PATHS, ids=lambda path: path.name)
+@pytest.mark.parametrize("script_path", CLI_SCANNED_PATHS, ids=lambda path: path.name)
 def test_script_only_uses_known_cli_interfaces(script_path: Path) -> None:
     for subcommand, flags in read_cli_invocations(script_path):
         assert subcommand in ALLOWED_FLAGS_BY_SUBCOMMAND
@@ -55,7 +57,7 @@ def test_script_only_uses_known_cli_interfaces(script_path: Path) -> None:
 
 def test_every_cli_subcommand_is_submitted() -> None:
     used_subcommands: set[str] = {
-        subcommand for script_path in SLURM_SCRIPT_PATHS for subcommand, _ in read_cli_invocations(script_path)
+        subcommand for script_path in CLI_SCANNED_PATHS for subcommand, _ in read_cli_invocations(script_path)
     }
 
     assert used_subcommands == set(ALLOWED_FLAGS_BY_SUBCOMMAND)
@@ -164,3 +166,12 @@ def test_mixed_precision_training_on_cuda_has_finite_losses(make_tiny_config: Co
     for epoch_record in history:
         for loss_name in ("cross_entropy_loss", "adaptive_clustering_loss", "entropy_separation_loss", "total_loss"):
             assert torch.isfinite(torch.tensor(epoch_record[loss_name]))
+
+
+@pytest.mark.parametrize("script_name", ["train.sbatch", "experiment_array.sbatch", "optimize_array.sbatch"])
+def test_run_scripts_prepare_data_before_running(script_name: str) -> None:
+    script_text: str = (SLURM_DIRECTORY / script_name).read_text()
+
+    assert "source slurm/data_helpers.sh" in script_text
+    assert script_text.index("prepare_data") < script_text.index("python -m astrouda.cli")
+    assert "${DATA_ARGUMENTS[@]+" in script_text
