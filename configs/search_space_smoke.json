@@ -1,0 +1,9 @@
+{
+  "learning_rate": {"type": "loguniform", "low": 1e-4, "high": 1e-2},
+  "domain_adaptation_weight": {"type": "loguniform", "low": 1e-3, "high": 5e-2},
+  "top_k": {"type": "int", "low": 2, "high": 3},
+  "bank_size": {"type": "choice", "choices": [32, 64]},
+  "momentum": {"type": "uniform", "low": 0.8, "high": 0.99},
+  "weight_decay": {"type": "loguniform", "low": 1e-5, "high": 1e-3},
+  "confidence_margin_initial": {"type": "uniform", "low": 0.2, "high": 1.5}
+}
