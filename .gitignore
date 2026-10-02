@@ -176,7 +176,7 @@ cython_debug/
 # Project
 .kilo/
 .worktrees/
-data/
+/data/
 outputs/
 results/
 *.pth
