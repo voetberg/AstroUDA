@@ -3,7 +3,7 @@ NERSC Perlmutter values from calo-om2rta (account, qos, constraint, -G, cpus, ti
 (a path or a name, default /pscratch/sd/v/voetberg/astrouda) is set just below it.
 Every script except test_gpu.sbatch takes: CONFIG [--set key=value ...]. CONFIG defaults to configs/lsst_full.json.
 
-First GPU check (debug qos, 30 minutes, needs no data): CUDA AMP test, then ResNet-50, crop 256, batch 64 on
+First GPU check (debug qos, 20 minutes, needs no data): CUDA AMP test, then ResNet-50, crop 256, batch 64 on
 synthetic images for two epochs, with peak GPU memory and utilisation printed at the end:
   sbatch slurm/test_gpu.sbatch
   tail -f slurm/logs/astrouda-test_<jobid>.out

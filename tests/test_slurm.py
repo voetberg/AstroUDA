@@ -80,7 +80,7 @@ def test_gpu_test_script_fits_the_debug_queue() -> None:
     script_text: str = (SLURM_DIRECTORY / "test_gpu.sbatch").read_text()
 
     assert "#SBATCH --qos=debug" in script_text
-    assert "#SBATCH --time=00:30:00" in script_text
+    assert "#SBATCH --time=00:20:00" in script_text
     assert "pytest -m gpu" in script_text
     assert "nvidia-smi" in script_text
 
