@@ -1,9 +1,7 @@
+import logging
 from torch import Tensor
 
-from astrouda.config import Config
-from astrouda.logging_utils import get_logger
-
-logger = get_logger(__name__, Config())
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 def total_loss(
