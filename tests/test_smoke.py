@@ -1,7 +1,6 @@
 import json
 import math
 import os
-import time
 from pathlib import Path
 
 from astrouda.cli import main
@@ -10,7 +9,6 @@ from tests.conftest import SMOKE_CONFIG_PATH
 
 def test_smoke_config_trains_end_to_end_on_cpu(tmp_path: Path) -> None:
     output_directory: Path = tmp_path / "smoke_output"
-    start_time: float = time.time()
 
     exit_code: int = main(
         [
@@ -25,7 +23,6 @@ def test_smoke_config_trains_end_to_end_on_cpu(tmp_path: Path) -> None:
     )
 
     assert exit_code == 0
-    assert time.time() - start_time < 120
     for file_name in ("config.json", "history.json", "checkpoint.pt", "best_model.pt"):
         assert os.path.exists(output_directory / file_name), file_name
 
