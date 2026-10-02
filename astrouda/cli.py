@@ -5,6 +5,7 @@ import sys
 from typing import Any, Optional
 
 from astrouda.config import Config
+from astrouda.optimization.cli import optimize_command, register_optimize_parser
 from astrouda.training import Trainer
 
 logger: logging.Logger = logging.getLogger(__name__)
@@ -38,6 +39,7 @@ def build_argument_parser() -> argparse.ArgumentParser:
     from astrouda.experiment.cli_registration import register_experiment_subcommands
 
     register_experiment_subcommands(subparsers)
+    register_optimize_parser(subparsers)
 
     return parser
 
@@ -60,6 +62,8 @@ def main(argument_list: Optional[list[str]] = None) -> int:
             train_command(arguments.config, arguments.overrides)
         elif arguments.command in ("experiment", "aggregate"):
             arguments.handler(arguments)
+        elif arguments.command == "optimize":
+            return optimize_command(arguments)
     except Exception:
         logger.exception("Training failed")
 
