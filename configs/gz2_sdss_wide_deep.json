@@ -1,0 +1,20 @@
+{
+  "experiment_name": "gz2_sdss_wide_to_deep",
+  "output_directory": "./outputs/gz2_sdss_wide_to_deep",
+  "device": "auto",
+  "dataset_name": "gz2_sdss_wide_deep",
+  "source_domain_name": "SDSS Wide",
+  "target_domain_name": "SDSS Deep (Stripe 82)",
+  "data_directory": "./data/gz2",
+  "number_of_classes": 10,
+  "native_image_size": 256,
+  "crop_size": 256,
+  "batch_size": 64,
+  "backbone_depth": 50,
+  "top_k": 7,
+  "learning_rate_decay_every_epochs": 10,
+  "use_mixed_precision": true,
+  "number_of_dataloader_workers": 8,
+  "pin_memory": true,
+  "number_of_seeds": 5
+}
