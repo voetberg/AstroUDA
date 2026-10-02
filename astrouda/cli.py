@@ -35,6 +35,10 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--set", dest="overrides", action="append", default=[], metavar="KEY=VALUE", help="Config override, VALUE parsed as JSON"
     )
 
+    from astrouda.experiment.cli_registration import register_experiment_subcommands
+
+    register_experiment_subcommands(subparsers)
+
     return parser
 
 
@@ -54,6 +58,8 @@ def main(argument_list: Optional[list[str]] = None) -> int:
     try:
         if arguments.command == "train":
             train_command(arguments.config, arguments.overrides)
+        elif arguments.command in ("experiment", "aggregate"):
+            arguments.handler(arguments)
     except Exception:
         logger.exception("Training failed")
 

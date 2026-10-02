@@ -371,6 +371,14 @@ class Trainer:
 
         return self.history
 
+    def load_best_model(self) -> None:
+        "Replace the current weights with those saved at the best epoch (best_model.pt)."
+        if not os.path.exists(self.best_model_path):
+            raise FileNotFoundError(f"No best model at {self.best_model_path}, train first")
+
+        self.model.load_state_dict(torch.load(self.best_model_path, map_location=self.device, weights_only=True))
+        self.logger.debug(f"Loaded best model weights from {self.best_model_path} (epoch {self.early_stopping.best_epoch})")
+
     def _write_history(self) -> None:
         with open(self.history_path, "w") as history_file:
             json.dump(self.history, history_file, indent=2)
