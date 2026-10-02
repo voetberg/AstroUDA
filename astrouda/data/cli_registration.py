@@ -10,6 +10,7 @@ logger: logging.Logger = logging.getLogger(__name__)
 
 def download_command(arguments: argparse.Namespace) -> int:
     "Returns 0 on success, 1 on a download failure."
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     directory: Path = Path(arguments.directory) if arguments.directory else default_data_directory(arguments.dataset)
 
     try:
