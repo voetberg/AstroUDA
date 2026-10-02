@@ -180,3 +180,7 @@ cython_debug/
 outputs/
 results/
 *.pth
+
+# Slurm job logs
+slurm/logs/*
+!slurm/logs/.gitkeep
