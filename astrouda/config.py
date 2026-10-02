@@ -67,6 +67,8 @@ class Config:
     entropy_step_values: list[float] = [0.3, -0.3, 0.5, -0.5]
     entropy_boundary_patience_epochs: int = 5
     confidence_margin_patience_epochs: int = 2
+    entropy_boundary_floor: float = 0.0  # design choice: rho is clamped to >= this
+    confidence_margin_floor: float = 0.05  # design choice: m is clamped to >= this, so the margin stays positive
     tuner_reference_loss: str = "train_total_loss"  # design choice: L_min is the minimum training total loss
 
     # ---- Optimisation ----
