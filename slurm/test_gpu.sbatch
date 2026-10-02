@@ -8,7 +8,7 @@
 #SBATCH --constraint=gpu
 #SBATCH -G 1
 #SBATCH --cpus-per-task=16
-#SBATCH --time=00:30:00
+#SBATCH --time=00:20:00
 #SBATCH --output=slurm/logs/%x_%j.out
 #SBATCH --mail-user=maggiev@fnal.gov
 #SBATCH --mail-type=ALL
@@ -55,7 +55,7 @@ python -m pytest -m gpu -q tests/test_slurm.py
 echo "=== 2/2 Full-size model on synthetic data, mixed precision ==="
 python -m astrouda.cli train --config configs/lsst_full.json \
     --set dataset_name=synthetic \
-    --set synthetic_samples_per_domain=2048 \
+    --set synthetic_samples_per_domain=1024 \
     --set device=cuda \
     --set use_mixed_precision=true \
     --set maximum_epochs=2 \
