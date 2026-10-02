@@ -26,6 +26,7 @@ class Config:
     use_mixed_precision: bool = False
     number_of_dataloader_workers: int = 0
     pin_memory: bool = False
+    overwrite_existing_runs: bool = False  # experiment driver: re-run runs whose report.json already exists
 
     # ---- Data ----
     dataset_name: str = "lsst"  # "lsst", "gz2_sdss_decals", "gz2_sdss_wide_deep" or "synthetic"
