@@ -96,10 +96,16 @@ class Trainer:
 
         self.completed_epochs: int = 0
         self.history: list[dict[str, float]] = []
+        self.stopped_for_time_limit: bool = False
 
         os.makedirs(self.config.output_directory, exist_ok=True)
         if self.config.resume_from_checkpoint is not None:
             self._restore(self.config.resume_from_checkpoint)
+        elif self.config.auto_resume and os.path.exists(self.checkpoint_path):
+            self.logger.info(f"auto_resume: found {self.checkpoint_path}")
+            self._restore(self.checkpoint_path)
+        else:
+            self.logger.debug("Starting from scratch, no checkpoint to resume")
 
     @property
     def checkpoint_path(self) -> str:
@@ -112,6 +118,11 @@ class Trainer:
     @property
     def history_path(self) -> str:
         return os.path.join(self.config.output_directory, "history.json")
+
+    @property
+    def finished(self) -> bool:
+        "True when maximum_epochs was reached or early stopping fired, False while epochs remain."
+        return self.completed_epochs >= self.config.maximum_epochs or self.early_stopping.should_stop
 
     def _seed_everything(self) -> None:
         random.seed(self.config.random_seed)
@@ -322,9 +333,27 @@ class Trainer:
             f"domain_adaptation={self.config.enable_domain_adaptation}"
         )
         self.config.to_json(os.path.join(self.config.output_directory, "config.json"))
+        self.stopped_for_time_limit = False
 
-        while self.completed_epochs < self.config.maximum_epochs and not self.early_stopping.should_stop:
-            epoch_start_time: float = time.time()
+        if self.finished:
+            self.logger.info(f"Already finished at epoch {self.completed_epochs}, nothing to train")
+
+            return self.history
+
+        training_start_time: float = time.monotonic()
+        longest_epoch_seconds: float = 0.0
+
+        while not self.finished:
+            if self._next_epoch_exceeds_budget(time.monotonic() - training_start_time, longest_epoch_seconds):
+                self._save()
+                self.stopped_for_time_limit = True
+                self.logger.info(
+                    f"Stopping for the wall time limit after epoch {self.completed_epochs}, checkpoint saved to {self.checkpoint_path}"
+                )
+
+                return self.history
+
+            epoch_start_time: float = time.monotonic()
             epoch_record: dict[str, float] = {
                 "epoch": self.completed_epochs + 1,
                 "learning_rate": self.optimizer.param_groups[0]["lr"],
@@ -354,8 +383,9 @@ class Trainer:
                 f"m={epoch_record['confidence_margin']:.3f} "
                 f"source_acc={epoch_record['source_validation_accuracy']:.4f} "
                 f"target_acc={epoch_record['target_validation_accuracy']:.4f} "
-                f"({time.time() - epoch_start_time:.1f}s)"
+                f"({time.monotonic() - epoch_start_time:.1f}s)"
             )
+            longest_epoch_seconds = max(longest_epoch_seconds, time.monotonic() - epoch_start_time)
 
             if self.completed_epochs % self.config.checkpoint_every_epochs == 0:
                 self._save()
@@ -370,6 +400,18 @@ class Trainer:
         self._save()
 
         return self.history
+
+    def _next_epoch_exceeds_budget(self, elapsed_seconds: float, longest_epoch_seconds: float) -> bool:
+        if self.config.maximum_wall_time_seconds is None or longest_epoch_seconds == 0.0:
+            return False  # no budget, or no epoch measured yet: always train one epoch per call so a chain makes progress
+
+        projected_seconds: float = elapsed_seconds + self.config.wall_time_epoch_margin * longest_epoch_seconds
+        self.logger.debug(
+            f"Wall time: elapsed {elapsed_seconds:.1f}s, longest epoch {longest_epoch_seconds:.1f}s, "
+            f"projected {projected_seconds:.1f}s of {self.config.maximum_wall_time_seconds:.1f}s"
+        )
+
+        return projected_seconds > self.config.maximum_wall_time_seconds
 
     def load_best_model(self) -> None:
         "Replace the current weights with those saved at the best epoch (best_model.pt)."

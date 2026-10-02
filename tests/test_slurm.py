@@ -15,6 +15,7 @@ ConfigFactory = Callable[..., Config]
 REPOSITORY_ROOT: Path = Path(__file__).resolve().parent.parent
 SLURM_DIRECTORY: Path = REPOSITORY_ROOT / "slurm"
 SLURM_SCRIPT_PATHS: list[Path] = sorted(SLURM_DIRECTORY.glob("*.sbatch")) + [SLURM_DIRECTORY / "submit_experiment.sh"]
+PRODUCTION_SCRIPT_NAMES: list[str] = ["train.sbatch", "experiment_array.sbatch", "optimize_array.sbatch"]
 
 ALLOWED_FLAGS_BY_SUBCOMMAND: dict[str, set[str]] = {
     "train": {"--config", "--set"},
@@ -74,6 +75,11 @@ def test_sbatch_scripts_declare_resources(script_path: Path) -> None:
     else:
         assert "#SBATCH --constraint=gpu" in script_text
         assert "#SBATCH -G 1" in script_text
+
+
+@pytest.mark.parametrize("script_name", PRODUCTION_SCRIPT_NAMES)
+def test_production_scripts_request_eight_hours(script_name: str) -> None:
+    assert "#SBATCH --time=08:00:00" in (SLURM_DIRECTORY / script_name).read_text()
 
 
 def test_gpu_test_script_fits_the_debug_queue() -> None:

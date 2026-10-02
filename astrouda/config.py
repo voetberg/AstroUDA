@@ -102,6 +102,9 @@ class Config:
     early_stopping_metric: str = "target_validation_accuracy"
     checkpoint_every_epochs: int = 1
     resume_from_checkpoint: Optional[str] = None
+    maximum_wall_time_seconds: Optional[float] = None  # training time budget, measured from the start of Trainer.train()
+    wall_time_epoch_margin: float = 1.5  # stop when elapsed + margin * longest epoch so far would exceed the budget
+    auto_resume: bool = False  # resume from <output_directory>/checkpoint.pt when it exists and no explicit checkpoint is set
 
     # ---- Evaluation ----
     number_of_seeds: int = 5

@@ -24,6 +24,7 @@ CONDA_ENVIRONMENT="${CONDA_ENVIRONMENT:-/pscratch/sd/v/voetberg/astrouda}"
 # ---- End of environment ----
 
 cd "${SLURM_SUBMIT_DIR}"
+source slurm/resubmit_helpers.sh
 
 # conda activation scripts reference unset variables
 set +u
@@ -41,4 +42,17 @@ export OMP_NUM_THREADS="${SLURM_CPUS_PER_TASK:-1}"
 # Flush log lines immediately so slurm/logs can be followed with tail -f
 export PYTHONUNBUFFERED=1
 
-python -m astrouda.cli aggregate --config "${CONFIG_PATH}" "$@"
+AGGREGATE_OUTPUT_FILE="$(mktemp)"
+trap 'rm -f "${AGGREGATE_OUTPUT_FILE}"' EXIT
+
+set +e
+python -m astrouda.cli aggregate --config "${CONFIG_PATH}" "$@" 2>&1 | tee "${AGGREGATE_OUTPUT_FILE}"
+AGGREGATE_EXIT_STATUS=${PIPESTATUS[0]}
+set -e
+
+if [ "${AGGREGATE_EXIT_STATUS}" -ne 0 ] && aggregation_should_be_deferred "${AGGREGATE_OUTPUT_FILE}"; then
+    echo "Runs are missing but experiment jobs are still queued or running: aggregation is deferred to a later job"
+    exit 0
+fi
+
+exit "${AGGREGATE_EXIT_STATUS}"
