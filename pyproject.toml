@@ -29,3 +29,4 @@ include = ["astrouda*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = ["gpu: needs a CUDA device, skipped when none is available"]
